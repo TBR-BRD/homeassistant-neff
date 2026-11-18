@@ -2,7 +2,7 @@
 
 Ein schönes, deutschsprachiges Home-Assistant-Dashboard für **Neff-Küchengeräte** (Backofen, Geschirrspüler, Kochfeld) über die offizielle **Home Connect**-Integration – mit Ein-Tipp-Favoriten wie „Pizza“, „Brötchen“ oder „Spüler in einer Stunde fertig“.
 
-[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-☕-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=black)](https://www.buymeacoffee.com/BMC_NAME)
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-☕-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=black)](https://www.buymeacoffee.com/thoralf.brandt)
 ![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2025.x%2B-41BDF5?style=for-the-badge&logo=homeassistant&logoColor=white)
 ![HACS](https://img.shields.io/badge/ben%C3%B6tigt-Mushroom%20Cards-orange?style=for-the-badge)
 
@@ -70,7 +70,7 @@ Alle Start-Buttons fragen vorher nach und sind ausgeblendet, solange schon ein P
 
 Wenn dir das Projekt gefällt, freue ich mich über einen Kaffee ☕
 
-<a href="https://www.buymeacoffee.com/BMC_NAME" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="50"></a>
+<a href="https://www.buymeacoffee.com/thoralf.brandt" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="50"></a>
 
 Mehr Projekte: [lets-make.de](https://www.lets-make.de) · [github.com/TBR-BRD](https://github.com/TBR-BRD)
 
