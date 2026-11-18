@@ -1,5 +1,7 @@
 # 🍳 Neff Küche für Home Assistant
 
+🇩🇪 Deutsch · [🇬🇧 English](README_EN.md)
+
 Ein schönes, deutschsprachiges Home-Assistant-Dashboard für **Neff-Küchengeräte** (Backofen, Geschirrspüler, Kochfeld) über die offizielle **Home Connect**-Integration – mit Ein-Tipp-Favoriten wie „Pizza“, „Brötchen“ oder „Spüler in einer Stunde fertig“.
 
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-☕-FFDD00?style=for-the-badge&logo=buymeacoffee&logoColor=black)](https://www.buymeacoffee.com/thoralf.brandt)
