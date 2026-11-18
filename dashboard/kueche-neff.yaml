@@ -1,0 +1,894 @@
+# Neff Küche – Home-Assistant-Dashboard (Home Connect)
+# https://github.com/TBR-BRD/homeassistant-neff
+# Voraussetzung: Mushroom Cards (HACS) + Skripte aus scripts/neff_scripts.yaml
+# Einfügen: Dashboard → ⋮ → Bearbeiten → ⋮ → Raw-Konfigurationseditor
+# Entity-IDs ggf. an deine Geräte anpassen (siehe README).
+
+title: Küche
+views:
+- title: Übersicht
+  path: uebersicht
+  icon: mdi:silverware-fork-knife
+  type: sections
+  max_columns: 3
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Küche
+      icon: mdi:silverware-fork-knife
+    - type: custom:mushroom-template-card
+      entity: sensor.backofen_betriebszustand
+      primary: Backofen
+      secondary: '{% set m = {''inactive'':''Aus'',''ready'':''Bereit'',''delayedstart'':''Startvorwahl'',''run'':''Läuft'',''pause'':''Pausiert'',''actionrequired'':''Aktion nötig'',''finished'':''Fertig'',''error'':''Fehler'',''aborting'':''Bricht ab''} %} {% set s = states(entity) %} {{ m.get(s, s) }}{% if s in [''run'',''pause''] %} · {{ states(''sensor.backofen_aktuelle_garraumtemperatur'') | int(0) }} °C{% set e = states(''sensor.backofen_programm_endzeit'') %}{% if e not in [''unknown'',''unavailable''] %} · bis {{ as_timestamp(e) | timestamp_custom(''%H:%M'') }}{% endif %}{% endif %}'
+      icon: mdi:stove
+      icon_color: '{% set s = states(entity) %} {{ {''run'':''deep-orange'',''pause'':''amber'',''finished'':''green'',''error'':''red'',''actionrequired'':''red'',''ready'':''blue'',''delayedstart'':''purple''}.get(s,''grey'') }}'
+      badge_icon: '{{ ''mdi:door-open'' if is_state(''sensor.backofen_tur'',''open'') else '''' }}'
+      badge_color: red
+      tap_action:
+        action: navigate
+        navigation_path: backofen
+      grid_options:
+        columns: full
+    - type: custom:mushroom-template-card
+      entity: sensor.geschirrspuler_betriebszustand
+      primary: Geschirrspüler
+      secondary: '{% set m = {''inactive'':''Aus'',''ready'':''Bereit'',''delayedstart'':''Startvorwahl'',''run'':''Läuft'',''pause'':''Pausiert'',''actionrequired'':''Aktion nötig'',''finished'':''Fertig'',''error'':''Fehler'',''aborting'':''Bricht ab''} %} {% set s = states(entity) %} {{ m.get(s, s) }}{% if s in [''run'',''pause'',''delayedstart''] %}{% set p = states(''sensor.geschirrspuler_programm_fortschritt'') %}{% if p not in [''unknown'',''unavailable''] %} · {{ p | int(0) }} %{% endif %}{% set e = states(''sensor.geschirrspuler_programm_endzeit'') %}{% if e not in [''unknown'',''unavailable''] %} · bis {{ as_timestamp(e) | timestamp_custom(''%H:%M'') }}{% endif %}{% endif %}'
+      icon: mdi:dishwasher
+      icon_color: '{% set s = states(entity) %} {{ {''run'':''blue'',''pause'':''amber'',''finished'':''green'',''error'':''red'',''actionrequired'':''red'',''ready'':''light-blue'',''delayedstart'':''purple''}.get(s,''grey'') }}'
+      badge_icon: |-
+        {{ 'mdi:alert' if not is_state('sensor.geschirrspuler_salz_fast_leer','off')
+           or not is_state('sensor.geschirrspuler_klarspuler_fast_leer','off') else '' }}
+      badge_color: orange
+      tap_action:
+        action: navigate
+        navigation_path: geschirrspueler
+      grid_options:
+        columns: full
+    - type: custom:mushroom-template-card
+      entity: sensor.kochfeld_betriebszustand
+      primary: Kochfeld
+      secondary: '{% set m = {''inactive'':''Aus'',''ready'':''Bereit'',''run'':''In Betrieb'',''pause'':''Pausiert'',''actionrequired'':''Aktion nötig'',''finished'':''Fertig'',''error'':''Fehler''} %} {% set s = states(entity) %} {{ m.get(s, s) }}{% if states(''number.kochfeld_wecker'') | int(0) > 0 %} · Wecker {{ (states(''number.kochfeld_wecker'') | int(0) / 60) | round(0) | int }} min{% endif %}'
+      icon: mdi:pot-steam
+      icon_color: '{% set s = states(entity) %} {{ {''run'':''red'',''pause'':''amber'',''error'':''red'',''ready'':''blue''}.get(s,''grey'') }}'
+      tap_action:
+        action: navigate
+        navigation_path: kochfeld
+      grid_options:
+        columns: full
+- title: Backofen
+  path: backofen
+  icon: mdi:stove
+  type: sections
+  max_columns: 3
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Backofen
+      icon: mdi:stove
+    - type: custom:mushroom-template-card
+      entity: sensor.backofen_betriebszustand
+      primary: '{% set m = {''inactive'':''Aus'',''ready'':''Bereit'',''delayedstart'':''Startvorwahl'',''run'':''Läuft'',''pause'':''Pausiert'',''actionrequired'':''Aktion nötig'',''finished'':''Fertig'',''error'':''Fehler'',''aborting'':''Bricht ab''} %} {% set s = states(entity) %}{{ m.get(s, s) }}'
+      secondary: '{% set names = {''hot_air'':''Heißluft'',''top_bottom_heating'':''Ober-/Unterhitze'',''hot_air_eco'':''Heißluft Eco'',''hot_air_grilling'':''Umluftgrillen'',''top_bottom_heating_eco'':''Ober-/Unterhitze Eco'',''bottom_heating'':''Unterhitze'',''pizza_setting'':''Pizzastufe'',''slow_cook'':''Niedertemperatur'',''intensive_heat'':''Intensivhitze'',''keep_warm'':''Warmhalten'',''preheat_ovenware'':''Geschirr vorwärmen'',''frozen_heatup_special'':''Tiefkühlgerichte'',''desiccation'':''Dörren'',''defrost'':''Auftauen'',''proof'':''Gären'',''hot_air_30_steam'':''Heißluft + 30 % Dampf'',''hot_air_60_steam'':''Heißluft + 60 % Dampf'',''hot_air_80_steam'':''Heißluft + 80 % Dampf'',''hot_air_100_steam'':''Heißluft + 100 % Dampf'',''sabbath_programme'':''Sabbat'',''grill_large_area'':''Grill groß'',''grill_small_area'':''Grill klein'',''steam'':''Dampfgaren'',''microwave_90_watt'':''Mikrowelle 90 W'',''microwave_180_watt'':''Mikrowelle 180 W'',''microwave_360_watt'':''Mikrowelle 360
+        W'',''microwave_600_watt'':''Mikrowelle 600 W'',''microwave_900_watt'':''Mikrowelle 900 W'',''microwave_1000_watt'':''Mikrowelle 1000 W'',''microwave_max'':''Mikrowelle max''} %} {% if is_state(''sensor.backofen_betriebszustand'',''inactive'') %}Ausgeschaltet{% else %}{% set a = states(''select.backofen_aktives_programm'') %} {% set p = a if a not in [''unknown'',''unavailable''] else states(''select.backofen_ausgewahltes_programm'') %}{% if p in [''unknown'',''unavailable''] %}{% set p = ''Kein Programm'' %}{% endif %} {% set k = p.replace(''cooking_oven_program_heating_mode_'','''').replace(''cooking_oven_program_'','''').replace(''cooking_oven_program_microwave_'',''microwave_'') %} {{ names.get(k, k.replace(''_'','' '') | title) }} · {{ states(''sensor.backofen_aktuelle_garraumtemperatur'') | int(0) }} °C{% endif %}'
+      icon: mdi:stove
+      icon_color: '{% set s = states(entity) %} {{ {''run'':''deep-orange'',''pause'':''amber'',''finished'':''green'',''error'':''red'',''actionrequired'':''red'',''ready'':''blue'',''delayedstart'':''purple''}.get(s,''grey'') }}'
+      fill_container: true
+      grid_options:
+        columns: full
+    - type: custom:mushroom-chips-card
+      alignment: center
+      chips:
+      - type: template
+        entity: sensor.backofen_tur
+        icon: '{{ ''mdi:door-open'' if is_state(entity,''open'') else ''mdi:door-closed'' }}'
+        icon_color: '{{ ''red'' if is_state(entity,''open'') else ''green'' }}'
+        content: '{{ ''Tür offen'' if is_state(entity,''open'') else ''Tür zu'' }}'
+      - type: template
+        entity: binary_sensor.backofen_innenbeleuchtung_aktiv
+        icon: mdi:lightbulb
+        icon_color: '{{ ''amber'' if is_state(entity,''on'') else ''grey'' }}'
+        content: '{{ ''Licht an'' if is_state(entity,''on'') else ''Licht aus'' }}'
+      - type: template
+        entity: binary_sensor.backofen_fernstart
+        icon: mdi:cellphone-wireless
+        icon_color: '{{ ''green'' if is_state(entity,''on'') else ''grey'' }}'
+        content: '{{ ''Fernstart an'' if is_state(entity,''on'') else ''Fernstart aus'' }}'
+      - type: conditional
+        conditions:
+        - entity: binary_sensor.backofen_konnektivitat
+          state_not: 'on'
+        chip:
+          type: template
+          icon: mdi:wifi-off
+          icon_color: red
+          content: Offline
+    - type: gauge
+      entity: sensor.backofen_aktuelle_garraumtemperatur
+      name: Garraum
+      unit: °C
+      min: 0
+      max: 300
+      needle: true
+      segments:
+      - from: 0
+        color: '#4fc3f7'
+      - from: 50
+        color: '#ffb74d'
+      - from: 150
+        color: '#ff7043'
+      - from: 230
+        color: '#e53935'
+      grid_options:
+        columns: 6
+        rows: 4
+      visibility:
+      - condition: state
+        entity: sensor.backofen_betriebszustand
+        state_not: inactive
+    - type: gauge
+      entity: sensor.backofen_programm_fortschritt
+      name: Fortschritt
+      unit: '%'
+      min: 0
+      max: 100
+      severity:
+        green: 0
+        yellow: 101
+        red: 101
+      grid_options:
+        columns: 6
+        rows: 4
+      visibility:
+      - condition: state
+        entity: sensor.backofen_betriebszustand
+        state:
+        - run
+        - pause
+      - condition: numeric_state
+        entity: sensor.backofen_programm_fortschritt
+        above: -1
+    - type: custom:mushroom-template-card
+      entity: sensor.backofen_programm_endzeit
+      primary: '{% set e = states(entity) %} {% if e not in [''unknown'',''unavailable''] %}Fertig um {{ as_timestamp(e) | timestamp_custom(''%H:%M'') }}{% else %}Keine Endzeit{% endif %}'
+      secondary: '{% set e = states(entity) %} {% if e not in [''unknown'',''unavailable''] %}{% set r = (as_timestamp(e) - now().timestamp()) | int(0) %}{% if r > 0 %}noch {{ r // 3600 }}:{{ ''%02d'' | format((r % 3600) // 60) }} h{% endif %}{% endif %}'
+      icon: mdi:timer-sand
+      icon_color: deep-orange
+      visibility:
+      - condition: state
+        entity: sensor.backofen_betriebszustand
+        state:
+        - run
+        - pause
+      grid_options:
+        columns: full
+    - type: custom:mushroom-template-card
+      primary: Fertig!
+      secondary: Das Backofen-Programm ist beendet.
+      icon: mdi:check-circle
+      icon_color: green
+      visibility:
+      - condition: state
+        entity: sensor.backofen_programm_beendet
+        state: present
+      grid_options:
+        columns: full
+  - type: grid
+    cards:
+    - type: heading
+      heading: Favoriten
+      icon: mdi:heart
+    - type: custom:mushroom-template-card
+      primary: Favoriten erscheinen, wenn kein Programm läuft
+      icon: mdi:information-outline
+      icon_color: grey
+      visibility:
+      - condition: state
+        entity: sensor.backofen_betriebszustand
+        state:
+        - run
+        - pause
+      grid_options:
+        columns: full
+    - type: custom:mushroom-template-card
+      primary: Pizza
+      secondary: Pizzastufe · 200 °C · 25 min
+      icon: mdi:pizza
+      icon_color: orange
+      layout: vertical
+      tap_action:
+        action: perform-action
+        perform_action: script.backofen_pizza
+        confirmation:
+          text: Pizza starten (200 °C, 25 min)?
+      grid_options:
+        columns: 6
+      visibility: &id001
+      - condition: state
+        entity: sensor.backofen_betriebszustand
+        state_not: run
+      - condition: state
+        entity: sensor.backofen_betriebszustand
+        state_not: pause
+    - type: custom:mushroom-template-card
+      primary: Brötchen
+      secondary: Heißluft · 180 °C · 10 min
+      icon: mdi:baguette
+      icon_color: amber
+      layout: vertical
+      tap_action:
+        action: perform-action
+        perform_action: script.backofen_broetchen
+        confirmation:
+          text: Brötchen aufbacken (Heißluft 180 °C, 10 min)?
+      grid_options:
+        columns: 6
+      visibility: *id001
+    - type: custom:mushroom-template-card
+      primary: Heißluft
+      secondary: 180 °C
+      icon: mdi:fan
+      icon_color: deep-orange
+      layout: vertical
+      tap_action:
+        action: perform-action
+        perform_action: script.backofen_heissluft_180
+        confirmation:
+          text: Heißluft 180 °C starten?
+      grid_options:
+        columns: 6
+      visibility: *id001
+    - type: custom:mushroom-template-card
+      primary: Ober-/Unterhitze
+      secondary: 200 °C
+      icon: mdi:format-vertical-align-center
+      icon_color: red
+      layout: vertical
+      tap_action:
+        action: perform-action
+        perform_action: script.backofen_ober_unterhitze_200
+        confirmation:
+          text: Ober-/Unterhitze 200 °C starten?
+      grid_options:
+        columns: 6
+      visibility: *id001
+    - type: custom:mushroom-template-card
+      primary: Umluftgrillen
+      secondary: 200 °C
+      icon: mdi:grill
+      icon_color: brown
+      layout: vertical
+      tap_action:
+        action: perform-action
+        perform_action: script.backofen_umluftgrillen_200
+        confirmation:
+          text: Umluftgrillen 200 °C starten?
+      grid_options:
+        columns: 6
+      visibility: *id001
+  - type: grid
+    cards:
+    - type: heading
+      heading: Programm
+      icon: mdi:tune-variant
+    - type: tile
+      entity: select.backofen_ausgewahltes_programm
+      name: Heizart
+      icon: mdi:fan
+      features:
+      - type: select-options
+      features_position: bottom
+      grid_options:
+        columns: full
+    - type: tile
+      entity: number.kuche_backofen_solltemperatur
+      name: Temperatur
+      icon: mdi:thermometer
+      color: deep-orange
+      features:
+      - type: numeric-input
+        style: buttons
+      features_position: bottom
+      grid_options:
+        columns: full
+    - type: tile
+      entity: number.kuche_backofen_dauer
+      name: Dauer (Sekunden)
+      icon: mdi:timer-outline
+      color: orange
+      features:
+      - type: numeric-input
+        style: buttons
+      features_position: bottom
+      grid_options:
+        columns: full
+    - type: tile
+      entity: switch.kuche_backofen_schnelles_vorheizen
+      name: Schnelles Vorheizen
+      icon: mdi:fire
+      color: red
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: number.backofen_wecker
+      name: Wecker
+      icon: mdi:alarm
+      grid_options:
+        columns: 6
+  - type: grid
+    cards:
+    - type: heading
+      heading: Steuerung
+      icon: mdi:gesture-tap-button
+    - type: custom:mushroom-template-card
+      primary: Start
+      icon: mdi:play
+      icon_color: green
+      layout: vertical
+      tap_action:
+        action: perform-action
+        perform_action: script.backofen_starten
+        confirmation:
+          text: Backofen-Programm jetzt starten?
+      visibility:
+      - condition: state
+        entity: sensor.backofen_betriebszustand
+        state_not: run
+      - condition: state
+        entity: sensor.backofen_betriebszustand
+        state_not: pause
+      grid_options:
+        columns: 4
+    - type: custom:mushroom-template-card
+      primary: Pause
+      icon: mdi:pause
+      icon_color: amber
+      layout: vertical
+      tap_action:
+        action: perform-action
+        perform_action: button.press
+        target:
+          entity_id: button.backofen_programm_pausieren
+      visibility:
+      - condition: state
+        entity: sensor.backofen_betriebszustand
+        state: run
+      grid_options:
+        columns: 4
+    - type: custom:mushroom-template-card
+      primary: Weiter
+      icon: mdi:play-pause
+      icon_color: green
+      layout: vertical
+      tap_action:
+        action: perform-action
+        perform_action: button.press
+        target:
+          entity_id: button.kuche_backofen_programm_fortsetzen
+      visibility:
+      - condition: state
+        entity: sensor.backofen_betriebszustand
+        state: pause
+      grid_options:
+        columns: 4
+    - type: custom:mushroom-template-card
+      primary: Stopp
+      icon: mdi:stop
+      icon_color: red
+      layout: vertical
+      tap_action:
+        action: perform-action
+        perform_action: button.press
+        target:
+          entity_id: button.backofen_programm_stoppen
+        confirmation:
+          text: Backofen-Programm wirklich abbrechen?
+      visibility:
+      - condition: state
+        entity: sensor.backofen_betriebszustand
+        state:
+        - run
+        - pause
+        - delayedstart
+      grid_options:
+        columns: 4
+    - type: tile
+      entity: switch.backofen_einschalter
+      name: Eingeschaltet
+      icon: mdi:power
+      color: green
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: switch.backofen_kindersicherung
+      name: Kindersicherung
+      icon: mdi:lock
+      color: purple
+      grid_options:
+        columns: 6
+- title: Geschirrspüler
+  path: geschirrspueler
+  icon: mdi:dishwasher
+  type: sections
+  max_columns: 3
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Geschirrspüler
+      icon: mdi:dishwasher
+    - type: custom:mushroom-template-card
+      entity: sensor.geschirrspuler_betriebszustand
+      primary: '{% set m = {''inactive'':''Aus'',''ready'':''Bereit'',''delayedstart'':''Startvorwahl'',''run'':''Läuft'',''pause'':''Pausiert'',''actionrequired'':''Aktion nötig'',''finished'':''Fertig'',''error'':''Fehler'',''aborting'':''Bricht ab''} %} {% set s = states(entity) %}{{ m.get(s, s) }}'
+      secondary: '{% set names = {''eco_50'':''Eco 50°'',''auto_1'':''Auto 35–45°'',''auto_2'':''Auto 45–65°'',''auto_3'':''Auto 65–75°'',''intensiv_70'':''Intensiv 70°'',''intensiv_45'':''Intensiv 45°'',''intensiv_power'':''Intensiv Power'',''kurz_60'':''Kurz 60°'',''quick_45'':''Quick 45°'',''quick_65'':''Quick 65°'',''glas_40'':''Glas 40°'',''glass_care'':''Glas Care'',''night_wash'':''Nacht'',''pre_rinse'':''Vorspülen'',''machine_care'':''Maschinenpflege'',''steam_fresh'':''Steam Fresh'',''maximum_cleaning'':''Maximale Reinigung'',''mixed_load'':''Gemischte Beladung'',''super_60'':''Super 60°'',''express_sparkle_65'':''Express Sparkle 65°'',''auto_half_load'':''Auto Halbe Beladung''} %} {% set a = states(''select.geschirrspuler_aktives_programm'') %} {% set p = a if a not in [''unknown'',''unavailable''] else states(''select.geschirrspuler_ausgewahltes_programm'') %} {% set k = p.replace(''dishcare_dishwasher_program_'','''') %} {{ names.get(k, k.replace(''_'','' '') | title) }}'
+      icon: mdi:dishwasher
+      icon_color: '{% set s = states(entity) %} {{ {''run'':''blue'',''pause'':''amber'',''finished'':''green'',''error'':''red'',''actionrequired'':''red'',''ready'':''light-blue'',''delayedstart'':''purple''}.get(s,''grey'') }}'
+      fill_container: true
+      grid_options:
+        columns: full
+    - type: custom:mushroom-chips-card
+      alignment: center
+      chips:
+      - type: template
+        entity: sensor.geschirrspuler_tur
+        icon: '{{ ''mdi:door-open'' if is_state(entity,''open'') else ''mdi:door-closed'' }}'
+        icon_color: '{{ ''red'' if is_state(entity,''open'') else ''green'' }}'
+        content: '{{ ''Tür offen'' if is_state(entity,''open'') else ''Tür zu'' }}'
+      - type: template
+        entity: binary_sensor.geschirrspuler_fernstart
+        icon: mdi:cellphone-wireless
+        icon_color: '{{ ''green'' if is_state(entity,''on'') else ''grey'' }}'
+        content: '{{ ''Fernstart an'' if is_state(entity,''on'') else ''Fernstart aus'' }}'
+      - type: conditional
+        conditions:
+        - entity: sensor.geschirrspuler_salz_fast_leer
+          state_not: 'off'
+        chip:
+          type: template
+          icon: mdi:shaker-outline
+          icon_color: orange
+          content: Salz nachfüllen
+      - type: conditional
+        conditions:
+        - entity: sensor.geschirrspuler_klarspuler_fast_leer
+          state_not: 'off'
+        chip:
+          type: template
+          icon: mdi:water-alert
+          icon_color: orange
+          content: Klarspüler nachfüllen
+      - type: conditional
+        conditions:
+        - entity: binary_sensor.geschirrspuler_konnektivitat
+          state_not: 'on'
+        chip:
+          type: template
+          icon: mdi:wifi-off
+          icon_color: red
+          content: Offline
+    - type: gauge
+      entity: sensor.geschirrspuler_programm_fortschritt
+      name: Fortschritt
+      unit: '%'
+      min: 0
+      max: 100
+      severity:
+        green: 0
+        yellow: 101
+        red: 101
+      grid_options:
+        columns: 6
+        rows: 4
+      visibility:
+      - condition: state
+        entity: sensor.geschirrspuler_betriebszustand
+        state:
+        - run
+        - pause
+      - condition: numeric_state
+        entity: sensor.geschirrspuler_programm_fortschritt
+        above: -1
+    - type: custom:mushroom-template-card
+      entity: sensor.geschirrspuler_programm_endzeit
+      primary: '{% set e = states(entity) %} {% if e not in [''unknown'',''unavailable''] %}Fertig um {{ as_timestamp(e) | timestamp_custom(''%H:%M'') }}{% else %}–{% endif %}'
+      secondary: '{% set e = states(entity) %} {% if e not in [''unknown'',''unavailable''] %}{% set r = (as_timestamp(e) - now().timestamp()) | int(0) %}{% if r > 0 %}noch {{ r // 3600 }}:{{ ''%02d'' | format((r % 3600) // 60) }} h{% endif %}{% endif %}'
+      icon: mdi:timer-sand
+      icon_color: blue
+      layout: vertical
+      visibility:
+      - condition: state
+        entity: sensor.geschirrspuler_betriebszustand
+        state:
+        - run
+        - pause
+        - delayedstart
+      grid_options:
+        columns: 6
+        rows: 4
+    - type: custom:mushroom-template-card
+      primary: Sauber!
+      secondary: Der Geschirrspüler ist fertig.
+      icon: mdi:check-circle
+      icon_color: green
+      visibility:
+      - condition: state
+        entity: sensor.geschirrspuler_programm_beendet
+        state: present
+      grid_options:
+        columns: full
+  - type: grid
+    cards:
+    - type: heading
+      heading: Favoriten
+      icon: mdi:heart
+    - type: custom:mushroom-template-card
+      primary: Favoriten erscheinen, wenn der Spüler bereit ist (an, Tür zu, Fernstart an)
+      icon: mdi:information-outline
+      icon_color: grey
+      visibility:
+      - condition: state
+        entity: sensor.geschirrspuler_betriebszustand
+        state_not: ready
+      grid_options:
+        columns: full
+    - type: custom:mushroom-template-card
+      primary: Eine Stunde
+      secondary: Eco 50° · Vario-Speed+
+      icon: mdi:timer-outline
+      icon_color: blue
+      layout: vertical
+      tap_action:
+        action: perform-action
+        perform_action: script.geschirrspuler_eine_stunde
+        confirmation:
+          text: „Eine Stunde“ jetzt starten?
+      grid_options:
+        columns: 6
+      visibility: &id002
+      - condition: state
+        entity: sensor.geschirrspuler_betriebszustand
+        state: ready
+    - type: custom:mushroom-template-card
+      primary: Eine Stunde · 8 Uhr
+      secondary: Start um 8:00 Uhr
+      icon: mdi:clock-start
+      icon_color: purple
+      layout: vertical
+      tap_action:
+        action: perform-action
+        perform_action: script.geschirrspuler_eine_stunde_8_uhr
+        confirmation:
+          text: „Eine Stunde“ für 8:00 Uhr vorwählen?
+      grid_options:
+        columns: 6
+      visibility: *id002
+    - type: custom:mushroom-template-card
+      primary: Nacht
+      secondary: leise
+      icon: mdi:weather-night
+      icon_color: indigo
+      layout: vertical
+      tap_action:
+        action: perform-action
+        perform_action: script.geschirrspuler_nacht
+        confirmation:
+          text: Nachtprogramm starten?
+      grid_options:
+        columns: 6
+      visibility: *id002
+    - type: custom:mushroom-template-card
+      primary: Glas 40°
+      secondary: schonend
+      icon: mdi:glass-wine
+      icon_color: cyan
+      layout: vertical
+      tap_action:
+        action: perform-action
+        perform_action: script.geschirrspuler_glas_40
+        confirmation:
+          text: Glas 40° starten?
+      grid_options:
+        columns: 6
+      visibility: *id002
+    - type: custom:mushroom-template-card
+      primary: Kurz 60°
+      secondary: schnell & heiß
+      icon: mdi:run
+      icon_color: teal
+      layout: vertical
+      tap_action:
+        action: perform-action
+        perform_action: script.geschirrspuler_kurz_60
+        confirmation:
+          text: Kurz 60° starten?
+      grid_options:
+        columns: 6
+      visibility: *id002
+    - type: custom:mushroom-template-card
+      primary: Maschinenpflege
+      secondary: ohne Geschirr
+      icon: mdi:wrench
+      icon_color: grey
+      layout: vertical
+      tap_action:
+        action: perform-action
+        perform_action: script.geschirrspuler_maschinenpflege
+        confirmation:
+          text: Maschinenpflege starten? Bitte vorher Geschirr ausräumen.
+      grid_options:
+        columns: 6
+      visibility: *id002
+  - type: grid
+    cards:
+    - type: heading
+      heading: Programm
+      icon: mdi:tune-variant
+    - type: tile
+      entity: select.geschirrspuler_ausgewahltes_programm
+      name: Programm
+      icon: mdi:format-list-bulleted
+      color: blue
+      features:
+      - type: select-options
+      features_position: bottom
+      grid_options:
+        columns: full
+    - type: tile
+      entity: number.geschirrspuler_start_in_relativ
+      name: Startvorwahl (Sekunden)
+      icon: mdi:clock-start
+      color: purple
+      features:
+      - type: numeric-input
+        style: buttons
+      features_position: bottom
+      grid_options:
+        columns: full
+    - type: custom:mushroom-entity-card
+      entity: switch.geschirrspuler_vario_speed
+      name: Vario-Speed+
+      icon: mdi:run-fast
+      icon_color: blue
+      tap_action:
+        action: toggle
+      grid_options:
+        columns: 6
+    - type: custom:mushroom-entity-card
+      entity: switch.geschirrspuler_intensivzone
+      name: Intensivzone
+      icon: mdi:fire-circle
+      icon_color: deep-orange
+      tap_action:
+        action: toggle
+      grid_options:
+        columns: 6
+    - type: custom:mushroom-entity-card
+      entity: switch.geschirrspuler_hygiene
+      name: Hygiene+
+      icon: mdi:shield-check
+      icon_color: green
+      tap_action:
+        action: toggle
+      grid_options:
+        columns: 6
+    - type: custom:mushroom-entity-card
+      entity: switch.geschirrspuler_brillanz_trocknung
+      name: Brillanz-Trocknung
+      icon: mdi:shimmer
+      icon_color: amber
+      tap_action:
+        action: toggle
+      grid_options:
+        columns: 6
+    - type: custom:mushroom-entity-card
+      entity: switch.geschirrspuler_stille_auf_abruf
+      name: Stille auf Abruf
+      icon: mdi:volume-off
+      icon_color: purple
+      tap_action:
+        action: toggle
+      grid_options:
+        columns: 6
+  - type: grid
+    cards:
+    - type: heading
+      heading: Steuerung
+      icon: mdi:gesture-tap-button
+    - type: custom:mushroom-template-card
+      primary: Start
+      icon: mdi:play
+      icon_color: green
+      layout: vertical
+      tap_action:
+        action: perform-action
+        perform_action: script.geschirrspuler_starten
+        confirmation:
+          text: Geschirrspüler jetzt starten?
+      visibility:
+      - condition: state
+        entity: sensor.geschirrspuler_betriebszustand
+        state: ready
+      grid_options:
+        columns: 6
+    - type: custom:mushroom-template-card
+      primary: Stopp
+      icon: mdi:stop
+      icon_color: red
+      layout: vertical
+      tap_action:
+        action: perform-action
+        perform_action: button.press
+        target:
+          entity_id: button.geschirrspuler_programm_stoppen
+        confirmation:
+          text: Spülprogramm wirklich abbrechen?
+      visibility:
+      - condition: state
+        entity: sensor.geschirrspuler_betriebszustand
+        state:
+        - run
+        - pause
+        - delayedstart
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: switch.geschirrspuler_einschalter
+      name: Eingeschaltet
+      icon: mdi:power
+      color: green
+      grid_options:
+        columns: full
+- title: Kochfeld
+  path: kochfeld
+  icon: mdi:pot-steam
+  type: sections
+  max_columns: 2
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Kochfeld
+      icon: mdi:pot-steam
+    - type: custom:mushroom-template-card
+      entity: sensor.kochfeld_betriebszustand
+      primary: '{% set m = {''inactive'':''Aus'',''ready'':''Bereit'',''run'':''In Betrieb'',''pause'':''Pausiert'',''actionrequired'':''Aktion nötig'',''finished'':''Fertig'',''error'':''Fehler''} %} {% set s = states(entity) %}{{ m.get(s, s) }}'
+      secondary: '{% if is_state(''binary_sensor.kochfeld_lokale_steuerung'',''on'') %}Wird gerade am Gerät bedient{% elif is_state(''switch.kochfeld_kindersicherung'',''on'') %}Kindersicherung aktiv{% else %}Neff Kochfeld{% endif %}'
+      icon: mdi:pot-steam
+      icon_color: '{% set s = states(entity) %} {{ {''run'':''red'',''pause'':''amber'',''error'':''red'',''actionrequired'':''red'',''ready'':''blue''}.get(s,''grey'') }}'
+      fill_container: true
+      grid_options:
+        columns: full
+    - type: custom:mushroom-chips-card
+      alignment: center
+      chips:
+      - type: template
+        entity: binary_sensor.kochfeld_konnektivitat
+        icon: '{{ ''mdi:wifi'' if is_state(entity,''on'') else ''mdi:wifi-off'' }}'
+        icon_color: '{{ ''green'' if is_state(entity,''on'') else ''red'' }}'
+        content: '{{ ''Online'' if is_state(entity,''on'') else ''Offline'' }}'
+      - type: template
+        entity: number.kochfeld_wecker
+        icon: mdi:alarm
+        icon_color: '{{ ''amber'' if states(entity) | int(0) > 0 else ''grey'' }}'
+        content: '{% set s = states(entity) | int(0) %} {% if s > 0 %}{{ s // 60 }}:{{ ''%02d'' | format(s % 60) }} min{% else %}Kein Wecker{% endif %}'
+    - type: tile
+      entity: number.kochfeld_wecker
+      name: Kurzzeitwecker (Sekunden)
+      icon: mdi:alarm
+      color: amber
+      features:
+      - type: numeric-input
+        style: buttons
+      features_position: bottom
+      grid_options:
+        columns: full
+    - type: tile
+      entity: switch.kochfeld_einschalter
+      name: Eingeschaltet
+      icon: mdi:power
+      color: green
+      grid_options:
+        columns: 6
+    - type: tile
+      entity: switch.kochfeld_kindersicherung
+      name: Kindersicherung
+      icon: mdi:lock
+      color: purple
+      grid_options:
+        columns: 6
+  - type: grid
+    cards:
+    - type: heading
+      heading: Wecker-Favoriten
+      icon: mdi:heart
+    - type: custom:mushroom-template-card
+      primary: 5 min
+      secondary: Kurzzeitwecker
+      icon: mdi:timer-outline
+      icon_color: amber
+      layout: vertical
+      tap_action:
+        action: perform-action
+        perform_action: number.set_value
+        target:
+          entity_id: number.kochfeld_wecker
+        data:
+          value: 300
+      grid_options:
+        columns: 6
+    - type: custom:mushroom-template-card
+      primary: 10 min
+      secondary: Kurzzeitwecker
+      icon: mdi:timer-outline
+      icon_color: amber
+      layout: vertical
+      tap_action:
+        action: perform-action
+        perform_action: number.set_value
+        target:
+          entity_id: number.kochfeld_wecker
+        data:
+          value: 600
+      grid_options:
+        columns: 6
+    - type: custom:mushroom-template-card
+      primary: 15 min
+      secondary: Kurzzeitwecker
+      icon: mdi:timer-outline
+      icon_color: amber
+      layout: vertical
+      tap_action:
+        action: perform-action
+        perform_action: number.set_value
+        target:
+          entity_id: number.kochfeld_wecker
+        data:
+          value: 900
+      grid_options:
+        columns: 6
+    - type: custom:mushroom-template-card
+      primary: 20 min
+      secondary: Kurzzeitwecker
+      icon: mdi:timer-outline
+      icon_color: amber
+      layout: vertical
+      tap_action:
+        action: perform-action
+        perform_action: number.set_value
+        target:
+          entity_id: number.kochfeld_wecker
+        data:
+          value: 1200
+      grid_options:
+        columns: 6
+    - type: custom:mushroom-template-card
+      primary: 30 min
+      secondary: Kurzzeitwecker
+      icon: mdi:timer-outline
+      icon_color: amber
+      layout: vertical
+      tap_action:
+        action: perform-action
+        perform_action: number.set_value
+        target:
+          entity_id: number.kochfeld_wecker
+        data:
+          value: 1800
+      grid_options:
+        columns: 6
+    - type: custom:mushroom-template-card
+      primary: Aus
+      secondary: Wecker stoppen
+      icon: mdi:timer-off-outline
+      icon_color: grey
+      layout: vertical
+      tap_action:
+        action: perform-action
+        perform_action: number.set_value
+        target:
+          entity_id: number.kochfeld_wecker
+        data:
+          value: 0
+      grid_options:
+        columns: 6

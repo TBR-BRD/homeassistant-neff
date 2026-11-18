@@ -1,0 +1,146 @@
+# Neff Küche – Skripte (Start-Buttons & Favoriten)
+# https://github.com/TBR-BRD/homeassistant-neff
+# In scripts.yaml einfügen. DEINE_..._DEVICE_ID ersetzen:
+#   Einstellungen → Geräte → Gerät öffnen → die ID steht in der Adresszeile (/config/devices/device/<ID>)
+# Hinweis: Neff lehnt Optionen ab, die ein Programm nicht kennt (z. B. Schnellaufheizen bei Pizzastufe).
+
+backofen_starten:
+  alias: Backofen starten
+  icon: mdi:play
+  sequence:
+  - action: select.select_option
+    target:
+      entity_id: select.backofen_aktives_programm
+    data:
+      option: '{{ states(''select.backofen_ausgewahltes_programm'') }}'
+  mode: single
+geschirrspuler_starten:
+  alias: Geschirrspüler starten
+  icon: mdi:play
+  sequence:
+  - action: select.select_option
+    target:
+      entity_id: select.geschirrspuler_aktives_programm
+    data:
+      option: '{{ states(''select.geschirrspuler_ausgewahltes_programm'') }}'
+  mode: single
+backofen_pizza:
+  alias: Backofen Pizza
+  icon: mdi:pizza
+  sequence:
+  - action: home_connect.set_program_and_options
+    data:
+      device_id: DEINE_BACKOFEN_DEVICE_ID
+      affects_to: active_program
+      program: cooking_oven_program_heating_mode_pizza_setting
+      cooking_oven_option_setpoint_temperature: 200
+      b_s_h_common_option_duration: 1500
+  mode: single
+backofen_broetchen:
+  alias: Backofen Brötchen aufbacken
+  icon: mdi:baguette
+  sequence:
+  - action: home_connect.set_program_and_options
+    data:
+      device_id: DEINE_BACKOFEN_DEVICE_ID
+      affects_to: active_program
+      program: cooking_oven_program_heating_mode_hot_air
+      cooking_oven_option_setpoint_temperature: 180
+      b_s_h_common_option_duration: 600
+  mode: single
+backofen_heissluft_180:
+  alias: Backofen Heißluft 180°
+  icon: mdi:fan
+  sequence:
+  - action: home_connect.set_program_and_options
+    data:
+      device_id: DEINE_BACKOFEN_DEVICE_ID
+      affects_to: active_program
+      program: cooking_oven_program_heating_mode_hot_air
+      cooking_oven_option_setpoint_temperature: 180
+  mode: single
+backofen_ober_unterhitze_200:
+  alias: Backofen Ober-/Unterhitze 200°
+  icon: mdi:format-vertical-align-center
+  sequence:
+  - action: home_connect.set_program_and_options
+    data:
+      device_id: DEINE_BACKOFEN_DEVICE_ID
+      affects_to: active_program
+      program: cooking_oven_program_heating_mode_top_bottom_heating
+      cooking_oven_option_setpoint_temperature: 200
+  mode: single
+backofen_umluftgrillen_200:
+  alias: Backofen Umluftgrillen 200°
+  icon: mdi:grill
+  sequence:
+  - action: home_connect.set_program_and_options
+    data:
+      device_id: DEINE_BACKOFEN_DEVICE_ID
+      affects_to: active_program
+      program: cooking_oven_program_heating_mode_hot_air_grilling
+      cooking_oven_option_setpoint_temperature: 200
+  mode: single
+geschirrspuler_eine_stunde:
+  alias: Geschirrspüler Eine Stunde
+  icon: mdi:timer-outline
+  sequence:
+  - action: home_connect.set_program_and_options
+    data:
+      device_id: DEINE_GESCHIRRSPUELER_DEVICE_ID
+      affects_to: active_program
+      program: dishcare_dishwasher_program_eco_50
+      dishcare_dishwasher_option_vario_speed_plus: true
+  mode: single
+geschirrspuler_eine_stunde_8_uhr:
+  alias: Geschirrspüler Eine Stunde – Start 8 Uhr
+  icon: mdi:clock-start
+  sequence:
+  - action: home_connect.set_program_and_options
+    data:
+      device_id: DEINE_GESCHIRRSPUELER_DEVICE_ID
+      affects_to: active_program
+      program: dishcare_dishwasher_program_eco_50
+      dishcare_dishwasher_option_vario_speed_plus: true
+      b_s_h_common_option_start_in_relative: '{% set t = today_at(''08:00'') %}{% if now() >= t %}{% set t = t + timedelta(days=1) %}{% endif %}{{ (t - now()).total_seconds() | int }}'
+  mode: single
+geschirrspuler_nacht:
+  alias: Geschirrspüler Nacht
+  icon: mdi:weather-night
+  sequence:
+  - action: home_connect.set_program_and_options
+    data:
+      device_id: DEINE_GESCHIRRSPUELER_DEVICE_ID
+      affects_to: active_program
+      program: dishcare_dishwasher_program_night_wash
+  mode: single
+geschirrspuler_glas_40:
+  alias: Geschirrspüler Glas 40°
+  icon: mdi:glass-wine
+  sequence:
+  - action: home_connect.set_program_and_options
+    data:
+      device_id: DEINE_GESCHIRRSPUELER_DEVICE_ID
+      affects_to: active_program
+      program: dishcare_dishwasher_program_glas_40
+  mode: single
+geschirrspuler_kurz_60:
+  alias: Geschirrspüler Kurz 60°
+  icon: mdi:run
+  sequence:
+  - action: home_connect.set_program_and_options
+    data:
+      device_id: DEINE_GESCHIRRSPUELER_DEVICE_ID
+      affects_to: active_program
+      program: dishcare_dishwasher_program_kurz_60
+  mode: single
+geschirrspuler_maschinenpflege:
+  alias: Geschirrspüler Maschinenpflege
+  icon: mdi:wrench
+  sequence:
+  - action: home_connect.set_program_and_options
+    data:
+      device_id: DEINE_GESCHIRRSPUELER_DEVICE_ID
+      affects_to: active_program
+      program: dishcare_dishwasher_program_machine_care
+  mode: single
